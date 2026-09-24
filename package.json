@@ -1,0 +1,19 @@
+{
+  "name": "glicbot-server",
+  "version": "1.0.0",
+  "description": "Proxy backend do GlicBot: guarda a chave de API e chama a NVIDIA NIM.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0"
+  }
+}
