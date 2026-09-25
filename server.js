@@ -92,11 +92,134 @@ const BASE_CONHECIMENTO = {
             "Exercícios intensos ou prolongados podem exigir ajuste na alimentação ou na dose de insulina, sempre orientado pelo médico.",
     },
     insulina: {
-        palavrasChave: ["insulina", "aplicar insulina", "dose", "aplicação"],
+        palavrasChave: ["insulina", "aplicar insulina", "dose de insulina", "aplicação"],
         texto:
             "Aplicação de insulina: a técnica correta envolve rodízio dos locais de aplicação (abdômen, coxa, braço) " +
             "para evitar lipodistrofia, respeitando o tempo de ação de cada tipo de insulina. " +
             "A dose e o tipo são sempre definidos pelo médico — o app ajuda a registrar e calcular, não substitui a prescrição.",
+    },
+    // Categorias adicionadas em set/2026, com base em conteúdo público da Sociedade
+    // Brasileira de Diabetes (diretriz.diabetes.org.br) e do Ministério da Saúde
+    // (linhasdecuidado.saude.gov.br) — ver fontes citadas na conversa com o Claude.
+    tipos_diabetes: {
+        palavrasChave: [
+            "tipo 1",
+            "tipo 2",
+            "diabetes tipo",
+            "diferenca entre diabetes",
+            "diferença entre diabetes",
+            "diabetes gestacional",
+            "o que e diabetes",
+            "o que é diabetes",
+        ],
+        texto:
+            "Tipos de diabetes: no tipo 1, o corpo não produz insulina — costuma aparecer em crianças/jovens e exige insulina desde o início. " +
+            "No tipo 2, o mais comum, o corpo produz insulina mas não a usa bem, geralmente se desenvolve devagar e está ligado a fatores como idade e peso. " +
+            "O diabetes gestacional aparece durante a gravidez e precisa de acompanhamento médico específico. " +
+            "O tipo exato só é confirmado por exames clínicos.",
+    },
+    metas_glicemicas: {
+        palavrasChave: [
+            "meta glicemica",
+            "meta glicêmica",
+            "valor normal",
+            "glicemia normal",
+            "quanto deveria estar",
+            "hemoglobina glicada",
+            "hba1c",
+            "glicemia de jejum",
+            "glicemia ideal",
+        ],
+        texto:
+            "Metas de glicemia (referência geral pra adultos, segundo a Sociedade Brasileira de Diabetes): em jejum, entre 80 e 130 mg/dL; " +
+            "até 2h depois das refeições, abaixo de 180 mg/dL; hemoglobina glicada (HbA1c), abaixo de 7%. " +
+            "Essas metas são individualizadas — o médico pode ajustar conforme idade, outras condições de saúde e risco de hipoglicemia.",
+    },
+    cuidados_pes: {
+        palavrasChave: [
+            "pe diabetico",
+            "pé diabético",
+            "cuidado com os pes",
+            "cuidado com os pés",
+            "ferida no pe",
+            "ferida no pé",
+            "unha encravada",
+            "calo no pe",
+            "calo no pé",
+        ],
+        texto:
+            "Cuidados com os pés: examine os pés semanalmente procurando bolhas, calos, rachaduras ou feridas; " +
+            "use calçados fechados e confortáveis, sem costura interna que machuque; mantenha a pele hidratada e as unhas bem cuidadas. " +
+            "Procure atendimento médico rápido se notar ferida que não cicatriza, dormência, formigamento, ou mudança de cor/temperatura no pé — " +
+            "essas complicações evoluem rápido em quem tem diabetes.",
+    },
+    // Categorias adicionadas em set/2026, com base em fontes internacionais de
+    // renome (American Diabetes Association — Standards of Care; Mayo Clinic;
+    // Joslin Diabetes Center/Harvard Medical School) — ver fontes citadas na
+    // conversa com o Claude. Valores cruzados com a SBD quando aplicável.
+    pre_diabetes: {
+        palavrasChave: ["pre-diabetes", "pré-diabetes", "pre diabetes", "risco de diabetes", "vou desenvolver diabetes"],
+        texto:
+            "Pré-diabetes é o estágio em que a glicemia está acima do normal mas ainda não é diabetes: glicemia de jejum entre 100 e 125 mg/dL, " +
+            "ou hemoglobina glicada entre 5,7% e 6,4% (critérios da American Diabetes Association). " +
+            "Mudanças no estilo de vida (alimentação, atividade física, perda de peso) podem reduzir bastante o risco de evoluir pra diabetes tipo 2. " +
+            "Vale fazer acompanhamento médico regular pra monitorar essa evolução.",
+    },
+    cetoacidose: {
+        palavrasChave: [
+            "cetoacidose",
+            "cetona",
+            "cetonas",
+            "halito cetonico",
+            "hálito cetônico",
+            "respiracao ofegante",
+            "respiração ofegante",
+        ],
+        texto:
+            "Cetoacidose diabética é uma emergência médica: sinais incluem sede intensa, urinar muito, náusea, vômito, dor abdominal, " +
+            "fraqueza extrema, respiração rápida/ofegante, hálito com cheiro adocicado e confusão mental. " +
+            "Costuma acontecer com glicemia muito alta (acima de 300 mg/dL) e é mais comum no diabetes tipo 1. " +
+            "Ao notar esses sinais, procure atendimento médico de emergência imediatamente — não é algo pra tratar em casa.",
+    },
+    dias_de_doenca: {
+        palavrasChave: ["estou doente", "gripe", "resfriado", "dias de doenca", "dias de doença", "doente com diabetes", "vomitando"],
+        texto:
+            "Em dias de doença (gripe, infecção, vômito), continue tomando a medicação de diabetes normalmente, " +
+            "a não ser que o médico oriente o contrário — mesmo comendo menos. " +
+            "Meça a glicemia com mais frequência (a cada 3-4 horas em casos mais fortes) e beba bastante líquido pra evitar desidratação. " +
+            "Procure atendimento médico se a glicemia ficar repetidamente acima de 250 mg/dL, se não conseguir manter líquidos no corpo, ou se a febre for alta.",
+    },
+    alcool: {
+        palavrasChave: ["alcool", "álcool", "bebida alcoolica", "bebida alcoólica", "cerveja", "vinho", "posso beber"],
+        texto:
+            "Álcool e diabetes: bebida alcoólica pode causar hipoglicemia, inclusive horas depois de beber, porque o fígado prioriza " +
+            "processar o álcool em vez de manter a glicemia estável — o risco é maior de estômago vazio. " +
+            "Se for beber, faça isso junto com comida e com moderação (até 1 dose/dia pra mulheres, até 2 pra homens, segundo a American Diabetes Association). " +
+            "Vale conversar com o médico sobre o que é seguro no seu caso, já que não existe uma regra única pra todo mundo.",
+    },
+    vacinas: {
+        palavrasChave: ["vacina", "vacinas", "imunizacao", "imunização", "tomar vacina"],
+        texto:
+            "Pessoas com diabetes têm recomendação de manter a vacinação em dia, incluindo gripe (anual), covid-19, pneumonia (pneumocócica), " +
+            "hepatite B e outras do calendário adulto — diabetes aumenta o risco de complicações em algumas infecções. " +
+            "As vacinas certas pra cada pessoa variam por idade e histórico, então o ideal é confirmar com um médico ou farmacêutico quais fazem sentido pro seu caso.",
+    },
+    complicacoes_cronicas: {
+        palavrasChave: [
+            "complicacao",
+            "complicação",
+            "complicacoes",
+            "complicações",
+            "problema na vista",
+            "problema no rim",
+            "vista embacada",
+            "vista embaçada",
+        ],
+        texto:
+            "Diabetes mal controlado ao longo do tempo pode afetar os olhos (retinopatia, podendo levar à cegueira), os rins (nefropatia, podendo " +
+            "levar à insuficiência renal), os nervos (neuropatia, formigamento/dormência que costuma começar nos pés) e o coração/vasos sanguíneos " +
+            "(maior risco de infarto e AVC). A prevenção passa por manter a glicemia controlada, fazer exames de rotina (olhos, rins, pés) " +
+            "pelo menos uma vez por ano, e manter hábitos saudáveis.",
     },
 };
 
