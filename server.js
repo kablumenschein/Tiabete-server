@@ -5,6 +5,12 @@ import rateLimit from "express-rate-limit";
 
 const app = express();
 
+// TRUST PROXY: o Render coloca o servidor atrás de um proxy reverso (é assim que
+// o HTTPS funciona). Sem isso, o Express não confia no cabeçalho "X-Forwarded-For"
+// que o proxy manda, e o rate limit (lá embaixo) não consegue identificar o IP de
+// quem fez a requisição pra contar corretamente. "1" = confia em 1 proxy na frente.
+app.set("trust proxy", 1);
+
 // CORS: só as origens listadas em ALLOWED_ORIGINS (separadas por vírgula) podem chamar
 // este servidor. Em dev, o padrão cobre Live Server e "abrir o HTML direto" (origin null).
 // Quando hospedar de verdade, defina ALLOWED_ORIGINS no .env com o domínio do GlicHelp.
@@ -28,8 +34,12 @@ app.use(
 app.use(express.json({ limit: "2kb" }));
 
 const PORT = process.env.PORT || 3001;
-const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
-const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
+// GROQ: trocamos da NVIDIA NIM pro Groq em set/2026 — mesmo modelo exato
+// (openai/gpt-oss-20b), só que rodando no hardware próprio do Groq (LPU),
+// muito mais rápido no plano gratuito. A API é compatível com o formato da
+// OpenAI, então o corpo da requisição não muda, só a URL e a chave.
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODELO = "openai/gpt-oss-20b"; // gratuito, feito pra baixa latência (21B params, 3.6B ativos), checado em set/2026
 const TAMANHO_MAXIMO_PERGUNTA = 500; // caracteres — evita perguntas gigantes consumindo crédito à toa
 const MAX_TOKENS_RESPOSTA = 300; // subido de 250: uma resposta real bateu nesse teto e ficou cortada no meio
@@ -149,7 +159,7 @@ function guardarNoCache(pergunta, resposta) {
 }
 
 // RATE LIMIT: no máximo 10 perguntas por IP a cada minuto — protege o crédito
-// gratuito da NVIDIA contra uso repetido/abusivo.
+// gratuito do Groq contra uso repetido/abusivo.
 const limitador = rateLimit({
     windowMs: 60 * 1000,
     max: 10,
@@ -158,9 +168,8 @@ const limitador = rateLimit({
     message: { erro: "Muitas perguntas em pouco tempo. Espere um minuto e tente de novo." },
 });
 
-// RETRY: cobre dois tipos de falha passageira — a NVIDIA responder com erro 5xx
-// (visto na prática: "500" com corpo vazio) e a chamada nem sair do servidor
-// (visto na prática: "fetch failed", geralmente oscilação de rede).
+// RETRY: cobre dois tipos de falha passageira — o Groq responder com erro 5xx
+// e a chamada nem sair do servidor (oscilação de rede, "fetch failed").
 //
 // Como o loop funciona, em palavras: tenta a chamada; se der erro que pode ser
 // passageiro E ainda sobrar tentativa, espera 1 segundo e volta pro topo do loop
@@ -168,17 +177,17 @@ const limitador = rateLimit({
 // esgotar as tentativas, lança o erro pra fora (quem chamou trata no catch).
 // Sem retry em erros 4xx: aí o problema é de configuração (chave errada, corpo
 // inválido etc.) e tentar de novo não muda nada.
-async function chamarNvidiaComRetry(promptSistema, pergunta, tentativas = 2) {
+async function chamarGroqComRetry(promptSistema, pergunta, tentativas = 2) {
     for (let tentativa = 1; tentativa <= tentativas; tentativa++) {
         const aindaTemTentativa = tentativa < tentativas;
         let resposta;
 
         try {
-            resposta = await fetch(NVIDIA_URL, {
+            resposta = await fetch(GROQ_URL, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${NVIDIA_API_KEY}`,
+                    Authorization: `Bearer ${GROQ_API_KEY}`,
                 },
                 body: JSON.stringify({
                     model: MODELO,
@@ -222,7 +231,7 @@ async function chamarNvidiaComRetry(promptSistema, pergunta, tentativas = 2) {
         }
 
         const detalhe = await resposta.text();
-        throw new Error(`NVIDIA NIM respondeu ${resposta.status}: ${detalhe}`);
+        throw new Error(`Groq respondeu ${resposta.status}: ${detalhe}`);
     }
 }
 
@@ -258,8 +267,8 @@ app.post("/api/glicbot", limitador, async (req, res) => {
         return res.json({ resposta: respostaEmCache });
     }
 
-    if (!NVIDIA_API_KEY) {
-        console.error("[GlicBot] NVIDIA_API_KEY não configurada no .env");
+    if (!GROQ_API_KEY) {
+        console.error("[GlicBot] GROQ_API_KEY não configurada no .env");
         return res.status(500).json({ erro: "Servidor sem chave de API configurada." });
     }
 
@@ -273,7 +282,7 @@ app.post("/api/glicbot", limitador, async (req, res) => {
     const promptSistema = [
         "Reasoning: low",
         "",
-        "Você é o GlicBot, assistente do app GlicHelp para pessoas com diabetes.",
+        "Você é o Tiabete, assistente do app GlicHelp para pessoas com diabetes.",
         "Responda SOMENTE com base no CONTEXTO abaixo. Se a resposta não estiver nele, diga que ainda não tem essa informação e sugira falar com um profissional de saúde.",
         "Nunca invente doses, diagnósticos ou informações que não estejam no contexto.",
         "Responda de forma direta e curta (até 3 frases).",
@@ -283,12 +292,12 @@ app.post("/api/glicbot", limitador, async (req, res) => {
     ].join("\n");
 
     try {
-        const resposta = await chamarNvidiaComRetry(promptSistema, pergunta);
+        const resposta = await chamarGroqComRetry(promptSistema, pergunta);
 
         const dados = await resposta.json();
 
         // "?." (optional chaining): se qualquer parte no meio do caminho não existir
-        // (ex.: a NVIDIA não mandou "choices"), a expressão inteira vira "undefined"
+        // (ex.: o Groq não mandou "choices"), a expressão inteira vira "undefined"
         // em vez de quebrar o servidor com erro. É o mesmo que checar cada nível com
         // "if" um dentro do outro, só que mais curto.
         const texto =
@@ -298,7 +307,7 @@ app.post("/api/glicbot", limitador, async (req, res) => {
         guardarNoCache(pergunta, texto);
 
         // MÉTRICA/LOG mínimo: um log estruturado por requisição, desde o dia 1.
-        // dados.usage vem da própria NVIDIA — é como a gente enxerga o consumo de
+        // dados.usage vem do próprio Groq — é como a gente enxerga o consumo de
         // crédito antes de ele acabar, sem precisar de painel nenhum.
         console.log(
             JSON.stringify({
@@ -306,7 +315,7 @@ app.post("/api/glicbot", limitador, async (req, res) => {
                 perguntaTamanho: pergunta.length,
                 duracaoMs: Date.now() - inicio,
                 tokensUsados: dados.usage || null,
-                origem: "nvidia",
+                origem: "groq",
                 sucesso: true,
             })
         );

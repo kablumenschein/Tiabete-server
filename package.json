@@ -1,7 +1,7 @@
 {
   "name": "glicbot-server",
   "version": "1.0.0",
-  "description": "Proxy backend do GlicBot: guarda a chave de API e chama a NVIDIA NIM.",
+  "description": "Proxy backend do GlicBot: guarda a chave de API e chama o Groq.",
   "type": "module",
   "main": "server.js",
   "scripts": {
